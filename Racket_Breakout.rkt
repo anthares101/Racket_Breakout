@@ -26,7 +26,7 @@
 (define BACKGROUND (bitmap/file "background.png")) ;;Background image
 
 ;;Initial game conditions
-(define BALL (make-ball (/ WIDTH 2) (/ HEIGHT 2) INIT_BALL_SPEED INIT_BALL_DIR)) ;;Initial ball conditions
+(define BALL (make-ball (/ WIDTH 2) (/ HEIGHT 1.2) INIT_BALL_SPEED INIT_BALL_DIR)) ;;Initial ball conditions
 
 ;;Create the inicial world
 (define w (make-world BALL))
@@ -44,23 +44,27 @@
 
 
 ;;World evolution functions
-;;Ball collision manager
-(define (ball-wall-collide? ball)
+;;Ball wall collision manager
+(define (ball-wall-collide_checker ball)
   (cond
-    ((> (ball-x ball) WIDTH) #t)
-    ((> (ball-y ball) HEIGHT) #t)
-    ((< (ball-y ball) 0) #t)
-    ((< (ball-x ball) 0) #t)
+    ((or (>= (ball-x ball) WIDTH)
+         (<= (ball-x ball) 0))
+     (- pi (ball-direction ball))
+    )
+    ((or (>= (ball-y ball) HEIGHT)
+         (<= (ball-y ball) 0))
+     (- (* 2 pi) (ball-direction ball))
+    )
     (else #f)
   )
 )
 
 (define (ball-collide ball)
-  ;;Check if the ball hit a wall
+  ;;If the ball touch a wall the direction is recalculates
+  (define new_direction (ball-wall-collide_checker ball))
   (cond
-    ((ball-wall-collide? ball);;If it collide with someting the direction is recalculated
-     (define direction (+ (* 2 (- pi (ball-direction ball))) (ball-direction ball)))
-     (make-ball (ball-x ball) (ball-y ball) (ball-speed ball) direction)
+    (new_direction
+     (make-ball (ball-x ball) (ball-y ball) (ball-speed ball) new_direction)
     )
     (else (make-ball (ball-x ball) (ball-y ball) (ball-speed ball) (ball-direction ball)))
   )
