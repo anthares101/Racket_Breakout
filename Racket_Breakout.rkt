@@ -20,8 +20,9 @@
 ;;Game atriibutes 
 (define WIDTH 800)
 (define HEIGHT 600)
-(define INIT_BALL_SPEED 5)
+(define INIT_BALL_SPEED 10)
 (define INIT_BALL_DIR (/ pi 2)) ;;Initial ball direction is 90º
+(define BALL_RADIUS 7.5) ;; Ball radius in pixels
 (define BALL_IMAGE (bitmap/file "ball.png")) ;;Ball image
 (define BACKGROUND (bitmap/file "background.png")) ;;Background image
 
@@ -47,12 +48,12 @@
 ;;Ball wall collision manager
 (define (ball-wall-collide_checker ball)
   (cond
-    ((or (>= (ball-x ball) WIDTH)
-         (<= (ball-x ball) 0))
+    ((or (>= (ball-x ball) (- WIDTH BALL_RADIUS))
+         (<= (ball-x ball) BALL_RADIUS))
      (- pi (ball-direction ball))
     )
-    ((or (>= (ball-y ball) HEIGHT)
-         (<= (ball-y ball) 0))
+    ((or (>= (ball-y ball) (- HEIGHT BALL_RADIUS))
+         (<= (ball-y ball) BALL_RADIUS))
      (- (* 2 pi) (ball-direction ball))
     )
     (else #f)
