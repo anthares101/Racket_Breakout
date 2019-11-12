@@ -20,13 +20,13 @@
 ;;Game atriibutes 
 (define WIDTH 800)
 (define HEIGHT 600)
-(define INIT_BALL_SPEED 0)
+(define INIT_BALL_SPEED 5)
 (define INIT_BALL_DIR (/ pi 2)) ;;Initial ball direction is 90º
 (define BALL_IMAGE (bitmap/file "ball.png")) ;;Ball image
 (define BACKGROUND (bitmap/file "background.png")) ;;Background image
 
 ;;Initial game conditions
-(define BALL (make-ball (/ WIDTH 2) (/ HEIGHT 1.2) INIT_BALL_SPEED INIT_BALL_DIR)) ;;Initial ball conditions
+(define BALL (make-ball (/ WIDTH 2) (/ HEIGHT 1.2) 0 INIT_BALL_DIR)) ;;Initial ball conditions
 
 ;;Create the inicial world
 (define w (make-world BALL))
@@ -94,7 +94,7 @@
 (define (start-game w)
   (define new_ball (make-ball (ball-x (world-ball w))
                            (ball-y (world-ball w))
-                           5 ;;Initial speed
+                           INIT_BALL_SPEED
                            (ball-direction (world-ball w))
                 )
   )
