@@ -6,7 +6,8 @@
 
 ;;Necesary data structures
 (define-struct ball (x y speed direction))
-(define-struct world (ball))
+(define-struct bar (x y speed long))
+(define-struct world (ball bar))
 
 ;;Addcional getters for ball struct
 (define (ball-Hspeed ball)
@@ -20,6 +21,8 @@
 ;;Game atriibutes 
 (define WIDTH 800)
 (define HEIGHT 600)
+(define BAR_SPEED 8)
+(define BAR_LONG 10)
 (define INIT_BALL_SPEED 10)
 (define INIT_BALL_DIR (/ pi 2)) ;;Initial ball direction is 90º
 (define BALL_RADIUS 7.5) ;; Ball radius in pixels
@@ -28,21 +31,25 @@
 
 ;;Initial game conditions
 (define BALL (make-ball (/ WIDTH 2) (/ HEIGHT 1.2) 0 INIT_BALL_DIR)) ;;Initial ball conditions
+(define BAR (make-bar (/ WIDTH 2) (/ HEIGHT 1.4) BAR_SPEED BAR_LONG))
 
 ;;Create the inicial world
-(define w (make-world BALL))
+(define w (make-world BALL BAR))
 
 
 ;;Render world 
 (define (render-scene world)
- (draw-ball (world-ball world) BACKGROUND) 
+  (draw-ball (world-ball world)
+             (draw-bar (world-bar world) BACKGROUND))
 )
 
 ;;Render objects functions
 (define (draw-ball ball background)
-   (place-image BALL_IMAGE (ball-x ball) (ball-y ball) BACKGROUND)
+   (place-image BALL_IMAGE (ball-x ball) (ball-y ball) background)
 )
-
+(define (draw-bar bar background)
+  (place-image (rectangle 10 5 "solid" "blue") (bar-x bar) (bar-y bar) background)
+)
 
 ;;World evolution functions
 ;;Ball wall collision manager
@@ -81,7 +88,7 @@
 (define (progress-world world)
   (define NEW_BALL (move-ball (world-ball world)))
 
-  (make-world NEW_BALL)
+  (make-world NEW_BALL BAR)
 )
 
 
@@ -100,7 +107,7 @@
                 )
   )
 
-  (make-world new_ball)
+  (make-world new_ball BAR)
 )
 
 ;;Game keys manager
