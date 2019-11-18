@@ -22,7 +22,7 @@
 (define WIDTH 800)
 (define HEIGHT 600)
 (define BAR_SPEED 8)
-(define BAR_LONG 10)
+(define BAR_LONG (/ WIDTH 5))
 (define INIT_BALL_SPEED 10)
 (define INIT_BALL_DIR (/ pi 2)) ;;Initial ball direction is 90º
 (define BALL_RADIUS 7.5) ;; Ball radius in pixels
@@ -31,7 +31,7 @@
 
 ;;Initial game conditions
 (define BALL (make-ball (/ WIDTH 2) (/ HEIGHT 1.2) 0 INIT_BALL_DIR)) ;;Initial ball conditions
-(define BAR (make-bar (/ WIDTH 2) (/ HEIGHT 1.4) BAR_SPEED BAR_LONG))
+(define BAR (make-bar (/ WIDTH 2) (/ HEIGHT 1.09) BAR_SPEED BAR_LONG))
 
 ;;Create the inicial world
 (define w (make-world BALL BAR))
@@ -48,7 +48,7 @@
    (place-image BALL_IMAGE (ball-x ball) (ball-y ball) background)
 )
 (define (draw-bar bar background)
-  (place-image (rectangle 10 5 "solid" "blue") (bar-x bar) (bar-y bar) background)
+  (place-image (rectangle BAR_LONG 12 "solid" "blue") (bar-x bar) (bar-y bar) background)
 )
 
 ;;World evolution functions
