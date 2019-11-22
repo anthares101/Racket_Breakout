@@ -80,7 +80,7 @@
          )
        ;;Cuerpo
        (cond ;;Determine new ball direction according to the collision distance to center
-         ((<= (abs posDiff) 3) (/ pi 2));;The ball bounce perpendicular to the bar
+         ((< (abs posDiff) 0.001) (/ pi 2));;The ball bounce perpendicular to the bar
          ((< posDiff 0) (* (- 1 (/ (abs posDiff) (/ (bar-long (world-bar world)) 2))) (/ pi 2)));;The ball bounce with a certain angle to the right
          ((> posDiff 0) (- pi (* (- 1 (/ (abs posDiff) (/ (bar-long (world-bar world)) 2))) (/ pi 2))));;The ball bounce with a certain angle to the left
        )
