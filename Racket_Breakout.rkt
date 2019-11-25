@@ -7,8 +7,8 @@
 ;;Necesary data structures
 (define-struct ball (x y speed direction))
 (define-struct bar (x y speed long))
-(define-struct block (x y status))
-(define-struct world (ball bar key_right key_left))
+(define-struct block (x y image status))
+(define-struct world (ball bar blocks key_right key_left))
 
 ;;Addcional getters for ball struct
 (define (ball-Hspeed ball)
@@ -22,40 +22,95 @@
 ;;Game atriibutes 
 (define WIDTH 800)
 (define HEIGHT 600)
+
+(define BLOCK_WIDTH 84)
+(define BLOCK_HEIGHT 28)
+(define BLOCK_ROWS 10)
+(define BLOCK_COLS 8)
+(define GROUP_BLOCKS_ORIGIN (+ (/ BLOCK_WIDTH 2) (/ (- WIDTH (* BLOCK_COLS BLOCK_WIDTH)) 2)))
+(define BLUE_BLOCK_IMAGE (bitmap/file "blue_block.png"))
+(define RED_BLOCK_IMAGE (bitmap/file "red_block.png"))
+(define GREEN_BLOCK_IMAGE (bitmap/file "green_block.png"))
+(define YELLOW_BLOCK_IMAGE (bitmap/file "yellow_block.png"))
+(define BLOCK_LIST (list BLUE_BLOCK_IMAGE RED_BLOCK_IMAGE GREEN_BLOCK_IMAGE YELLOW_BLOCK_IMAGE))
+
 (define BAR_SPEED 8)
 (define BAR_LONG (/ WIDTH 5))
 (define INIT_BAR_X (/ WIDTH 2))
 (define INIT_BAR_Y (/ HEIGHT 1.09))
+
 (define INIT_BALL_X (/ WIDTH 2))
 (define INIT_BALL_Y (/ HEIGHT 1.2))
 (define INIT_BALL_SPEED 10)
 (define INIT_BALL_DIR (/ pi 2)) ;;Initial ball direction is 90º
-(define BALL_RADIUS 8.5) ;; Ball radius in pixels
+(define BALL_RADIUS 9) ;; Ball radius in pixels
 (define BALL_IMAGE (bitmap/file "ball.png")) ;;Ball image
+
 (define BACKGROUND (bitmap/file "background.png")) ;;Background image
+
+
+;;Level generation
+(define (make-blocks)
+  (do
+      ;;Variables del bucle
+      (
+       (i 0 (cond
+              ((= j 0) (+ i 1))
+              (else i)
+            ))
+       (j 1 (modulo (+ j 1) BLOCK_COLS))
+       (colour (random (length BLOCK_LIST)) (random (length BLOCK_LIST)))
+       (pos_x GROUP_BLOCKS_ORIGIN (cond
+                                    ((= j 0) GROUP_BLOCKS_ORIGIN)
+                                    (else (+ pos_x BLOCK_WIDTH))
+                                   ))
+       (pos_y BLOCK_HEIGHT (cond
+                             ((= j 0) (+ pos_y BLOCK_HEIGHT))
+                             (else pos_y)
+                           ))
+       (result (list) (append result (list (make-block pos_x pos_y (list-ref BLOCK_LIST colour) #f))))
+      )
+    ;;Condicion y sentencia de salida
+    ((= i BLOCK_ROWS) result)
+  )
+)
 
 
 ;;Initial game conditions
 (define BALL (make-ball INIT_BALL_X INIT_BALL_Y 0 INIT_BALL_DIR)) ;;Initial ball conditions
 (define BAR (make-bar INIT_BAR_X INIT_BAR_Y BAR_SPEED BAR_LONG))
+(define BLOCKS (make-blocks))
 
 ;;Create the inicial world
-(define w (make-world BALL BAR #f #f))
+(define w (make-world BALL BAR BLOCKS #f #f))
 
 
 ;;Render world 
 (define (render-scene world)
   (draw-ball (world-ball world)
-             (draw-bar (world-bar world) BACKGROUND))
+             (draw-bar (world-bar world)
+                       (draw-blocks (world-blocks world) BACKGROUND)))
 )
 
 ;;Render objects functions
 (define (draw-ball ball background)
    (place-image BALL_IMAGE (ball-x ball) (ball-y ball) background)
 )
+
 (define (draw-bar bar background)
-  (place-image (rectangle (bar-long bar) 12 "solid" "blue") (bar-x bar) (bar-y bar) background)
+  (place-image (rectangle (bar-long bar) 12 215 "grey") (bar-x bar) (bar-y bar) background)
 )
+
+(define (draw-blocks blocks background)
+  (cond ((empty? blocks)  background)
+        (else (draw-block (car blocks) (draw-blocks (cdr blocks) background)))
+  )
+)
+
+(define (draw-block block background)
+  (place-image (block-image block) (block-x block) (block-y block) background)
+)
+
 
 ;;World evolution functions
 ;;Ball wall collision manager
@@ -148,7 +203,7 @@
   (define new_ball (move-ball world))
   (define new_bar (move-bar world))
 
-  (make-world new_ball new_bar (world-key_right world) (world-key_left world))
+  (make-world new_ball new_bar (world-blocks world) (world-key_right world) (world-key_left world))
 )
 
 
@@ -170,7 +225,7 @@
                    )
   )
 
-  (make-world new_ball (world-bar world) (world-key_right world) (world-key_left world))
+  (make-world new_ball (world-bar world) (world-blocks world) (world-key_right world) (world-key_left world))
 )
 
 ;;Game keys manager
@@ -178,16 +233,16 @@
   (cond
        ;;(and (key=? key " ") (= (ball-speed (world-ball world)) 0))
         ((key=? key " ") (start-game world))
-        [(key=? key "left") (make-world (world-ball world) (world-bar world) (world-key_right world) #t)]
-        [(key=? key "right") (make-world (world-ball world) (world-bar world) #t (world-key_left world))]
+        [(key=? key "left") (make-world (world-ball world) (world-bar world) (world-blocks world) (world-key_right world) #t)]
+        [(key=? key "right") (make-world (world-ball world) (world-bar world) (world-blocks world) #t (world-key_left world))]
         (else world)
   )
 )
 
 (define (release-key world key)
   (cond
-        [(key=? key "left") (make-world (world-ball world) (world-bar world) (world-key_right world) #f)]
-        [(key=? key "right") (make-world (world-ball world) (world-bar world) #f (world-key_left world))]
+        [(key=? key "left") (make-world (world-ball world) (world-bar world) (world-blocks world) (world-key_right world) #f)]
+        [(key=? key "right") (make-world (world-ball world) (world-bar world) (world-blocks world) #f (world-key_left world))]
         (else world)
   )
 )
