@@ -7,6 +7,7 @@
 ;;Necesary data structures
 (define-struct ball (x y speed direction))
 (define-struct bar (x y speed long))
+(define-struct block (x y status))
 (define-struct world (ball bar key_right key_left))
 
 ;;Addcional getters for ball struct
