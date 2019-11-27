@@ -113,7 +113,29 @@
 
 
 ;;World evolution functions
-;;Ball wall collision manager
+;;Determine if the ball collide with a block and recalculate the direction if necesary
+(define (ball-collide_block ball blocks)
+  (cond
+    ((null? blocks) #f)
+    ((and (>= (ball-y ball) (- (block-y (car blocks)) (+ (/ BLOCK_HEIGHT 2) BALL_RADIUS)))
+          (<= (ball-y ball) (+ (block-y (car blocks)) (+ (/ BLOCK_HEIGHT 2) BALL_RADIUS)))
+          (>= (ball-x ball) (- (block-x (car blocks)) (+ (/ BLOCK_WIDTH 2) BALL_RADIUS)))
+          (<= (ball-x ball) (+ (block-x (car blocks)) (+ (/ BLOCK_WIDTH 2) BALL_RADIUS))))
+     (cond ;;Determine from where the ball hit the block
+       ((and (> (ball-x ball) (- (block-x (car blocks)) (/ BLOCK_WIDTH 2))) (< (ball-x ball) (+ (block-x (car blocks)) (/ BLOCK_WIDTH 2))))
+        (- (* 2 pi) (ball-direction ball)) ;;Horizontal collision
+       )
+       ((and (> (ball-y ball) (- (block-y (car blocks)) (/ BLOCK_HEIGHT 2))) (< (ball-y ball) (+ (block-y (car blocks)) (/ BLOCK_HEIGHT 2))))
+        (- pi (ball-direction ball)) ;;Vertical collision
+       )
+       (else (+ (ball-direction ball) pi));;Corner
+     )
+    )
+    (else (ball-collide_block ball (cdr blocks)))
+  )
+)
+
+;;Ball collision manager
 (define (ball-collide_checker world)
   (cond
     ;;Wall collisions
@@ -142,11 +164,12 @@
        )
      )
     )
-    ;;No collision detected
-    (else #f)
+    ;;Block collisions
+    (else (ball-collide_block (world-ball world) (world-blocks world)))
   )
 )
 
+;;Recalculate the ball direction if a collision happens
 (define (ball-collide world)
   ;;If the ball touch something the direction is recalculated
   (define new_direction (ball-collide_checker world))
