@@ -122,10 +122,12 @@
           (>= (ball-x ball) (- (block-x (car blocks)) (+ (/ BLOCK_WIDTH 2) BALL_RADIUS)))
           (<= (ball-x ball) (+ (block-x (car blocks)) (+ (/ BLOCK_WIDTH 2) BALL_RADIUS))))
      (cond ;;Determine from where the ball hit the block
-       ((and (> (ball-x ball) (- (block-x (car blocks)) (/ BLOCK_WIDTH 2))) (< (ball-x ball) (+ (block-x (car blocks)) (/ BLOCK_WIDTH 2))))
+       ((and (>= (ball-x ball) (- (block-x (car blocks)) (/ BLOCK_WIDTH 2)))
+             (<= (ball-x ball) (+ (block-x (car blocks)) (/ BLOCK_WIDTH 2))))
         (- (* 2 pi) (ball-direction ball)) ;;Horizontal collision
        )
-       ((and (> (ball-y ball) (- (block-y (car blocks)) (/ BLOCK_HEIGHT 2))) (< (ball-y ball) (+ (block-y (car blocks)) (/ BLOCK_HEIGHT 2))))
+       ((and (>= (ball-y ball) (- (block-y (car blocks)) (/ BLOCK_HEIGHT 2)))
+             (<= (ball-y ball) (+ (block-y (car blocks)) (/ BLOCK_HEIGHT 2))))
         (- pi (ball-direction ball)) ;;Vertical collision
        )
        (else (+ (ball-direction ball) pi));;Corner
