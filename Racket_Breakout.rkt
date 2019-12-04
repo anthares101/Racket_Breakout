@@ -10,7 +10,7 @@
 (define-struct block (x y image))
 (define-struct world (ball bar blocks lifes key_right key_left))
 
-;;Addcional getters for ball struct
+;;Addional getters for ball struct
 (define (ball-Hspeed ball)
   (* (cos (ball-direction ball)) (ball-speed ball))
 )
@@ -99,6 +99,7 @@
   (cond
     ((= (world-lifes world) 0)
      (set! FINAL_FRAME #t)
+     (play-sound "resources/sound/defeat.wav" #t)
      
      (place-image DEFEAT_SCREEN (/ WIDTH 2) (/ HEIGHT 2)
                   (draw-lifes (world-lifes world) HEART_WIDTH
@@ -108,6 +109,7 @@
     )
     ((null? (world-blocks world))
      (set! FINAL_FRAME #t)
+     (play-sound "resources/sound/victory.wav" #t)
      
      (place-image VICTORY_SCREEN (/ WIDTH 2) (/ HEIGHT 2)
                   (draw-lifes (world-lifes world) HEART_WIDTH
@@ -164,6 +166,7 @@
           (>= (ball-x ball) (- (block-x (car blocks)) (+ (/ BLOCK_WIDTH 2) BALL_RADIUS)))
           (<= (ball-x ball) (+ (block-x (car blocks)) (+ (/ BLOCK_WIDTH 2) BALL_RADIUS))))
      (play-sound "resources/sound/bounce2.wav" #t)
+     
      (cond ;;Determine from where the ball hit the block
        ((and (>= (ball-x ball) (- (block-x (car blocks)) (/ BLOCK_WIDTH 2)))
              (<= (ball-x ball) (+ (block-x (car blocks)) (/ BLOCK_WIDTH 2))))
@@ -187,12 +190,14 @@
     ((or (>= (ball-x (world-ball world)) (- WIDTH BALL_RADIUS));;Vertical collision
          (<= (ball-x (world-ball world)) BALL_RADIUS))
      (play-sound "resources/sound/bounce1.wav" #t)
+     
      (- pi (ball-direction (world-ball world)))
     )
     ((or (>= (ball-y (world-ball world)) (- HEIGHT BALL_RADIUS));;Horizontal collision
          (<= (ball-y (world-ball world)) BALL_RADIUS))
-     (- (* 2 pi) (ball-direction (world-ball world)))
      (play-sound "resources/sound/bounce1.wav" #t)
+     
+     (- (* 2 pi) (ball-direction (world-ball world)))
     )
     ;;Bar collisions
     ((and (>= (ball-y (world-ball world)) (- (bar-y (world-bar world)) (+ 6 BALL_RADIUS)))
@@ -200,6 +205,7 @@
           (>= (ball-x (world-ball world)) (- (bar-x (world-bar world)) (+ (/ (bar-long (world-bar world)) 2) BALL_RADIUS)))
           (<= (ball-x (world-ball world)) (+ (bar-x (world-bar world)) (+ (/ (bar-long (world-bar world)) 2) BALL_RADIUS))))
      (play-sound "resources/sound/bounce3.wav" #t)
+     
      (let
          (;;Variables
           (posDiff (- (ball-x (world-ball world)) (bar-x (world-bar world))))
