@@ -1,8 +1,5 @@
 ;;Load necesary libraries
 (require 2htdp/universe 2htdp/image)
-(require racket/list)
-(require racket/gui/base)
-
 
 ;;Necesary data structures
 (define-struct ball (x y speed direction))
