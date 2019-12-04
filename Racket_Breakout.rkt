@@ -19,37 +19,43 @@
   (* (sin (ball-direction ball)) (ball-speed ball))
 )
 
-;;Game atriibutes 
+;;Game atriibutes
+(define FINAL_FRAME #f)
+
 (define WIDTH 800)
 (define HEIGHT 600)
+
+(define VICTORY_SCREEN (bitmap/file "resources/victory.png"))
+(define DEFEAT_SCREEN (bitmap/file "resources/defeat.png"))
 
 (define BLOCK_WIDTH 84)
 (define BLOCK_HEIGHT 28)
 (define BLOCK_ROWS 9)
 (define BLOCK_COLS 8)
 (define GROUP_BLOCKS_ORIGIN (+ (/ BLOCK_WIDTH 2) (/ (- WIDTH (* BLOCK_COLS BLOCK_WIDTH)) 2)))
-(define BLUE_BLOCK_IMAGE (bitmap/file "blue_block.png"))
-(define RED_BLOCK_IMAGE (bitmap/file "red_block.png"))
-(define GREEN_BLOCK_IMAGE (bitmap/file "green_block.png"))
-(define YELLOW_BLOCK_IMAGE (bitmap/file "yellow_block.png"))
+(define BLUE_BLOCK_IMAGE (bitmap/file "resources/blue_block.png"))
+(define RED_BLOCK_IMAGE (bitmap/file "resources/red_block.png"))
+(define GREEN_BLOCK_IMAGE (bitmap/file "resources/green_block.png"))
+(define YELLOW_BLOCK_IMAGE (bitmap/file "resources/yellow_block.png"))
 (define BLOCK_LIST (list BLUE_BLOCK_IMAGE RED_BLOCK_IMAGE GREEN_BLOCK_IMAGE YELLOW_BLOCK_IMAGE))
 
-(define BAR_SPEED 8)
+(define BAR_SPEED 14)
 (define BAR_LONG (/ WIDTH 5))
 (define INIT_BAR_X (/ WIDTH 2))
 (define INIT_BAR_Y (/ HEIGHT 1.09))
 
 (define INIT_BALL_X (/ WIDTH 2))
 (define INIT_BALL_Y (/ HEIGHT 1.2))
-(define INIT_BALL_SPEED 10)
+(define INIT_BALL_SPEED 8)
+(define MAX_BALL_SPEED 12)
 (define INIT_BALL_DIR (/ pi 2)) ;;Initial ball direction is 90º
 (define BALL_RADIUS 9) ;; Ball radius in pixels
-(define BALL_IMAGE (bitmap/file "ball.png")) ;;Ball image
+(define BALL_IMAGE (bitmap/file "resources/ball.png")) ;;Ball image
 
 (define INIT_LIFES 3) ;;Initial player lifes
-(define HEART_IMAGE (bitmap/file "heart.png"))
+(define HEART_IMAGE (bitmap/file "resources/heart.png"))
 (define HEART_WIDTH 38)
-(define BACKGROUND (bitmap/file "background.png")) ;;Background image
+(define BACKGROUND (bitmap/file "resources/background.png")) ;;Background image
 
 
 ;;Level generation
@@ -90,10 +96,32 @@
 
 ;;Render world 
 (define (render-scene world)
-  (draw-lifes (world-lifes world) HEART_WIDTH
-              (draw-ball (world-ball world)
-                         (draw-bar (world-bar world)
-                                   (draw-blocks (world-blocks world) BACKGROUND))))
+  (cond
+    ((= (world-lifes world) 0)
+     (set! FINAL_FRAME #t)
+     
+     (place-image DEFEAT_SCREEN (/ WIDTH 2) (/ HEIGHT 2)
+                  (draw-lifes (world-lifes world) HEART_WIDTH
+                              (draw-ball (world-ball world)
+                                         (draw-bar (world-bar world)
+                                                   (draw-blocks (world-blocks world) BACKGROUND)))))
+    )
+    ((null? (world-blocks world))
+     (set! FINAL_FRAME #t)
+     
+     (place-image VICTORY_SCREEN (/ WIDTH 2) (/ HEIGHT 2)
+                  (draw-lifes (world-lifes world) HEART_WIDTH
+                              (draw-ball (world-ball world)
+                                         (draw-bar (world-bar world)
+                                                   (draw-blocks (world-blocks world) BACKGROUND)))))
+    )
+    (else
+     (draw-lifes (world-lifes world) HEART_WIDTH
+                 (draw-ball (world-ball world)
+                            (draw-bar (world-bar world)
+                                      (draw-blocks (world-blocks world) BACKGROUND))))
+    )
+  )
 )
 
 ;;Render objects functions
@@ -135,6 +163,7 @@
           (<= (ball-y ball) (+ (block-y (car blocks)) (+ (/ BLOCK_HEIGHT 2) BALL_RADIUS)))
           (>= (ball-x ball) (- (block-x (car blocks)) (+ (/ BLOCK_WIDTH 2) BALL_RADIUS)))
           (<= (ball-x ball) (+ (block-x (car blocks)) (+ (/ BLOCK_WIDTH 2) BALL_RADIUS))))
+     (play-sound "resources/sound/bounce2.wav" #t)
      (cond ;;Determine from where the ball hit the block
        ((and (>= (ball-x ball) (- (block-x (car blocks)) (/ BLOCK_WIDTH 2)))
              (<= (ball-x ball) (+ (block-x (car blocks)) (/ BLOCK_WIDTH 2))))
@@ -157,17 +186,20 @@
     ;;Wall collisions
     ((or (>= (ball-x (world-ball world)) (- WIDTH BALL_RADIUS));;Vertical collision
          (<= (ball-x (world-ball world)) BALL_RADIUS))
+     (play-sound "resources/sound/bounce1.wav" #t)
      (- pi (ball-direction (world-ball world)))
     )
     ((or (>= (ball-y (world-ball world)) (- HEIGHT BALL_RADIUS));;Horizontal collision
          (<= (ball-y (world-ball world)) BALL_RADIUS))
      (- (* 2 pi) (ball-direction (world-ball world)))
+     (play-sound "resources/sound/bounce1.wav" #t)
     )
     ;;Bar collisions
     ((and (>= (ball-y (world-ball world)) (- (bar-y (world-bar world)) (+ 6 BALL_RADIUS)))
           (<= (ball-y (world-ball world)) (+ (bar-y (world-bar world)) (+ 6 BALL_RADIUS)))
           (>= (ball-x (world-ball world)) (- (bar-x (world-bar world)) (+ (/ (bar-long (world-bar world)) 2) BALL_RADIUS)))
           (<= (ball-x (world-ball world)) (+ (bar-x (world-bar world)) (+ (/ (bar-long (world-bar world)) 2) BALL_RADIUS))))
+     (play-sound "resources/sound/bounce3.wav" #t)
      (let
          (;;Variables
           (posDiff (- (ball-x (world-ball world)) (bar-x (world-bar world))))
@@ -181,17 +213,22 @@
      )
     )
     ;;Block collisions
-    (else (ball-collide_block (world-ball world) (world-blocks world)))
+    (else
+     (ball-collide_block (world-ball world) (world-blocks world))
+    )
   )
 )
 
-;;Recalculate the ball direction if a collision happens
+;;Recalculate the ball direction if a collision happens and increase ball speed
 (define (ball-collide world)
   ;;If the ball touch something the direction is recalculated
   (define new_direction (ball-collide_checker world))
   (cond
     (new_direction
-     (make-ball (ball-x (world-ball world)) (ball-y (world-ball world)) (ball-speed (world-ball world)) new_direction)
+     (if (< (ball-speed (world-ball world)) MAX_BALL_SPEED)
+         (make-ball (ball-x (world-ball world)) (ball-y (world-ball world)) (+ (ball-speed (world-ball world)) 0.2) new_direction)
+         (make-ball (ball-x (world-ball world)) (ball-y (world-ball world)) (ball-speed (world-ball world)) new_direction)
+     )
     )
     (else (make-ball (ball-x (world-ball world)) (ball-y (world-ball world)) (ball-speed (world-ball world)) (ball-direction (world-ball world))))
   )
@@ -200,9 +237,8 @@
 ;;Update ball state
 (define (move-ball world)
   (cond
-    ((>= (+ (ball-y (world-ball world)) BALL_RADIUS) HEIGHT)
-     BALL
-    )
+    ((or (= (world-lifes world) 0) (null? (world-blocks world))) (world-ball world))
+    ((ball-fallen? (world-ball world)) BALL)
     (else
      (define new_ball (ball-collide world));;Check for collisions
      (make-ball (- (ball-x new_ball) (ball-Hspeed new_ball)) (- (ball-y new_ball) (ball-Vspeed new_ball)) (ball-speed new_ball) (ball-direction new_ball))
@@ -262,8 +298,9 @@
   (>= (+ (ball-y ball) BALL_RADIUS) HEIGHT)
 )
 
+;;Update player lifes
 (define (update-lifes world)
-  (if (ball-fallen? (world-ball world))
+  (if (and (ball-fallen? (world-ball world)) (> (world-lifes world) 0))
       (- (world-lifes world) 1)
       (world-lifes world)
   )
@@ -271,33 +308,33 @@
 
 ;;Manage the world evolution
 (define (progress-world world)
-  (define new_ball (move-ball world))
-  (define new_bar (move-bar world))
-  (define new_blocks (update-blocks (world-blocks world) (world-ball world)))
   (define new_lifes (update-lifes world))
-
+  (define new_bar (move-bar world))
+  ;;Necesary to avoid the ball from restart his position if the game has ended or bounce wrong on the bar
+  (define new_ball (move-ball (make-world
+                               (world-ball world)
+                               new_bar
+                               (world-blocks world)
+                               new_lifes
+                               (world-key_right world)
+                               (world-key_left world))))
+  (define new_blocks (update-blocks (world-blocks world) (world-ball world)))
+  
   (make-world new_ball new_bar new_blocks new_lifes (world-key_right world) (world-key_left world))
 )
 
 
 ;;If the ball touch the floor or all the blocks are destroyed the game ends
-(define (end-game? world)
-  (cond
-    ((and (>= (+ (ball-y (world-ball world)) BALL_RADIUS) HEIGHT) (= (world-lifes world) 1)) #t)
-    ((null? (world-blocks world)) #t)
-    (else #f)
-  )
-)
-
+(define (end-game? world) FINAL_FRAME)
 
 ;;Start game
 (define (start-game world)
   (cond
-    ((= (ball-speed (world-ball world)) 0) 
-     (define new_ball (make-ball (ball-x BALL)
-                                 (ball-y BALL)
+    ((and (= (ball-speed (world-ball world)) 0) (> (world-lifes world) 0) (not (null? (world-blocks world))))
+     (define new_ball (make-ball (ball-x (world-ball world))
+                                 (ball-y (world-ball world))
                                  INIT_BALL_SPEED
-                                 (ball-direction BALL)
+                                 (ball-direction (world-ball world))
                       )
      )
 
