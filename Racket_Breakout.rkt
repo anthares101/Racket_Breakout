@@ -17,8 +17,6 @@
 )
 
 ;;Game atriibutes
-(define FINAL_FRAME #f)
-
 (define WIDTH 800)
 (define HEIGHT 600)
 
@@ -93,9 +91,17 @@
 
 ;;Render world 
 (define (render-scene world)
+  (draw-lifes (world-lifes world) HEART_WIDTH
+              (draw-ball (world-ball world)
+                         (draw-bar (world-bar world)
+                                   (draw-blocks (world-blocks world) BACKGROUND)))
+              )
+)
+
+;;Render the last scene of the game
+(define (render-lastScene world)
   (cond
     ((= (world-lifes world) 0)
-     (set! FINAL_FRAME #t)
      (play-sound "resources/sound/defeat.wav" #t)
      
      (place-image DEFEAT_SCREEN (/ WIDTH 2) (/ HEIGHT 2)
@@ -104,8 +110,7 @@
                                          (draw-bar (world-bar world)
                                                    (draw-blocks (world-blocks world) BACKGROUND)))))
     )
-    ((null? (world-blocks world))
-     (set! FINAL_FRAME #t)
+    (else
      (play-sound "resources/sound/victory.wav" #t)
      
      (place-image VICTORY_SCREEN (/ WIDTH 2) (/ HEIGHT 2)
@@ -113,12 +118,6 @@
                               (draw-ball (world-ball world)
                                          (draw-bar (world-bar world)
                                                    (draw-blocks (world-blocks world) BACKGROUND)))))
-    )
-    (else
-     (draw-lifes (world-lifes world) HEART_WIDTH
-                 (draw-ball (world-ball world)
-                            (draw-bar (world-bar world)
-                                      (draw-blocks (world-blocks world) BACKGROUND))))
     )
   )
 )
@@ -328,7 +327,9 @@
 
 
 ;;If the ball touch the floor or all the blocks are destroyed the game ends
-(define (end-game? world) FINAL_FRAME)
+(define (end-game? world)
+  (or (= (world-lifes world) 0) (null? (world-blocks world)))
+)
 
 ;;Start game
 (define (start-game world)
@@ -348,7 +349,7 @@
 )
 
 ;;Game keys manager
-(define (deal-with-guess world key)
+(define (push-key world key)
   (cond
        ;;(and (key=? key " ") (= (ball-speed (world-ball world)) 0))
         ((key=? key " ") (start-game world))
@@ -370,11 +371,11 @@
 (define (game)
   (big-bang w
     (to-draw render-scene)
-    (on-key deal-with-guess)
+    (on-key push-key)
     (on-release release-key)
     (on-tick progress-world)
     (name "Racket_Breakout")
-    (stop-when end-game?))
+    (stop-when end-game? render-lastScene))
 )
 
 (game)
